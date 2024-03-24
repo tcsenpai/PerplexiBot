@@ -176,3 +176,5 @@ dist
 
 bun.lockdb
 config.js
+bun.lockb
+context.json
