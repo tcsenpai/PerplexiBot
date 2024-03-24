@@ -1,0 +1,4 @@
+[
+  { "role": "user", "content": "*enters the room*" },
+  { "role": "assistant", "content": "Hi! " }
+]
