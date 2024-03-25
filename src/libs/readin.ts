@@ -1,4 +1,4 @@
-import * as readline from "readline/promises";
+import * as readline from 'readline/promises';
 
 export default async function readin(q: string = ""): Promise<string> {
   const rl = readline.createInterface({

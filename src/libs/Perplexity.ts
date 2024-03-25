@@ -1,8 +1,11 @@
 // Wrapper class for easy tasking with Perplexity (and OpenAI in general)
 
-import OpenAI from "openai";
-import type { RequestOptions } from "openai/core.mjs";
+import fs from 'fs';
+import OpenAI from 'openai';
+import config from 'config/';
+import { ContextPart } from 'libs/parseCommands';
 
+import type { RequestOptions } from "openai/core.mjs";
 interface Message {
   role: string;
   content: string;
@@ -25,7 +28,7 @@ export default class Perplexity {
     c: "assistant",
   };
   context: Context = { messages: [] };
-  options: RequestOptions = {}
+  options: RequestOptions = {};
 
   constructor(
     api_key: string,
@@ -41,6 +44,10 @@ export default class Perplexity {
     this.verbose = verbose;
     // Setting options
     this.options = options;
+    // Adding personality
+    this.add_to_context(config);
+    // Loading ltm if any
+    this.inject_ltm()
     // Creating an openai agent
     this.instance = new OpenAI({
       baseURL: base_url,
@@ -61,7 +68,7 @@ export default class Perplexity {
       return false;
     }
     this.context.messages.push(message);
-    if(this.verbose) console.log("[OK] Added to context for: " + message.role);
+    if (this.verbose) console.log("[OK] Added to context for: " + message.role);
   }
 
   // INFO Setting a default model
@@ -71,7 +78,7 @@ export default class Perplexity {
 
   // INFO Context viewer
   show_context() {
-    console.log(this.context)
+    console.log(this.context);
   }
 
   // INFO Wrapper for asking
@@ -87,7 +94,10 @@ export default class Perplexity {
   }
 
   // INFO Wrapper around completion
-  async complete(override_model?: string | boolean, options: RequestOptions = {}) {
+  async complete(
+    override_model?: string | boolean,
+    options: RequestOptions = {}
+  ) {
     if (this.verbose) console.log("[WORKING] Thinking...");
     let used_model = override_model ? override_model : this.current_model;
     const chatCompletion = await this.instance.chat.completions.create(
@@ -103,4 +113,34 @@ export default class Perplexity {
   }
 
   // TODO Support streams if needed
+
+  // NOTE Helper to load context from file
+  inject_ltm(verbose: boolean = true) {
+    let loaded_context = fs.readFileSync("ltm/ltm.json", {
+      encoding: "utf-8",
+    });
+    let list_context = JSON.parse(loaded_context) as ContextPart[];
+    for (let i = 0; i < list_context.length; i++) {
+      let msg = list_context[i] as ContextPart;
+      this.add_to_context(msg);
+      if (verbose) console.log("[" + msg.role + "]> " + msg.content);
+    }
+  }
+
+  // NOTE Helper to save context long term
+  save_in_context(role: string, message: string) {
+    let loaded_context = fs.readFileSync("ltm/context.json", {
+      encoding: "utf-8",
+    });
+    let list_context = JSON.parse(loaded_context) as Array<{
+      role: string;
+      content: string;
+    }>;
+    let new_insertion = {
+      role: role,
+      content: message,
+    };
+    list_context.push(new_insertion);
+    fs.writeFileSync("ltm/context.json", JSON.stringify(list_context));
+  }
 }
