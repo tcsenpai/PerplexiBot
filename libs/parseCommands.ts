@@ -3,7 +3,7 @@ export interface ContextPart {
     content: string
 }
 
-export default function parseCommands(input: string): {proceed: boolean, logpart: string | null} {
+export function parseCommands(input: string): {proceed: boolean, logpart: string | null} {
     let proceed = true
     let logpart = null
     switch (input) {
@@ -13,7 +13,7 @@ export default function parseCommands(input: string): {proceed: boolean, logpart
         case "end":
         case "bye":
             proceed = false
-            logpart = "Last conversation ended at: " + String(Date.now())
+            logpart = "{ Memory: Last conversation ended at: " + String(Date.now() + " }")
             break
         default:
             break
